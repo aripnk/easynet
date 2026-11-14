@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M0-03 · Green `just check`** — M0-02 left a Rust 1.85.0 workspace, `easynet` / `easynetd` help stubs, and the spec §9 config parser. Do not recreate `rust-toolchain.toml`. `just check` must stay scope gate, then fmt, clippy `-D warnings`, and nextest. Do not start M1 until M0-04 is done and the owner asks for planning.
+**M0-04 · NAT lab, deny, linker, CI, devcontainer** — Copy `docs/dev.md` §§3–4 byte-for-byte. `just lab-test` must print `nat-lab-topology-ok` only after the topology asserts. Do not start M1 until M0-04 is done and the owner asks for planning.
 
 ## Blocked
 
@@ -19,6 +19,11 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-14 · M0-03 green `just check`
+- Done: `just check` already depended on `scope-check`, then `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo nextest run --workspace`. Left that recipe in place. Did not edit `rust-toolchain.toml`, did not add a Makefile, and did not replace the M0-02 config tests.
+- Verified: `test -f rust-toolchain.toml && test -f justfile`; `just check` exits 0. `Cargo.lock` and `target/` stay out of the tree because they are outside this card's allowlist.
+- Notes: `docs/tasks/M0-bootstrap.md` status stays `todo` because that path is outside the allowlist. Roadmap M0-03 is ticked. Next task is M0-04.
 
 ### 2026-11-14 · M0-02 scaffold, toolchain pin, config parser
 - Done: `rust-toolchain.toml` channel `1.85.0` with rustfmt and clippy. Workspace crates `easynet-core`, `easynet-net`, `easynet-admin`, `easynet-cli`, `easynet-ffi` (edition 2024). Core parses spec §9 with serde and toml 0.8; `default_toml()` is the Unix sample. `easynet config init` writes that sample only when the path is absent. Net, admin, and ffi are stubs. No snow, tun-rs, or axum.
