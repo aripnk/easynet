@@ -1,0 +1,28 @@
+# Rust fmt/clippy/nextest and the NAT lab job are added by M0-04
+# from the fenced workflow in docs/dev.md. Do not remove the scope job.
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch base
+        run: |
+          if [ -n "${{ github.base_ref }}" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            echo "RANGE=origin/${{ github.base_ref }}...HEAD" >> "$GITHUB_ENV"
+          elif git rev-parse --verify origin/main >/dev/null 2>&1; then
+            echo "RANGE=origin/main...HEAD" >> "$GITHUB_ENV"
+          fi
+      - name: Card allowlist
+        run: |
+          if [ -n "${RANGE:-}" ]; then
+            bash scripts/check-card-scope.sh --range "$RANGE"
+          else
+            echo "card-scope-ok (no base ref)"
+          fi

@@ -1,0 +1,66 @@
+# Progress log
+
+Handoff between agent sessions. **Newest entry first.**
+Agents read **Next task**, **Blocked**, and the newest entry.
+Do not read the whole log unless a card says to.
+
+## Next task
+
+**M0-02 · Scaffold module layout, toolchain pin, and config parser** — Protocol locks Q16–Q23 are in the spec, api, and ADR-0012..0016. M4-00 still writes three GET JSON bodies before any portal handler. Do not start M1 until M0-04 is done and the owner asks for planning.
+
+## Blocked
+
+*(none)*
+
+<!-- Format:
+- YYYY-MM-DD · card ID · question for the owner · what you tried
+-->
+
+---
+
+## Entries
+
+### 2026-11-14 · Card scope gate (Q24)
+- Done: `scripts/check-card-scope.sh` and `justfile` (`scope-check` then fmt/clippy/nextest). ADR-0017. The card id is the committed **Next task**; paths come from that card's `**Files:**` line. CI range check is in the `dev.md` workflow that M0-04 copies. Next task remains M0-02.
+- Verified: script parses M0-02 from committed progress when HEAD has it.
+- Notes: Commit this steering tree before M0-02. Until that commit, `just scope-check` fails because these docs are outside M0-02's allowlist. Do not add them to the card to silence it.
+
+### 2026-11-14 · Protocol locks (Q16–Q23)
+- Done: Owner locks recorded. STUN-before-mesh demux and relay-of-handshake (ADR-0012). Noise prologue and snow nonces (ADR-0013). SWIM timers and 2-byte gossip header (ADR-0014). Reverse proxy, IPC, bearer, admin JSON, HMAC webhook (ADR-0015). Toolchain file `1.85.0` and system linker (ADR-0016). Bootstrap exception appended to ADR-0002. `easynet.toml` schema in spec §9. M0-02 now creates the toolchain file and the config parser. M0-04 copies `docs/dev.md` §§3–4 and must prove topology. M2-00, M3-00, M4-00 planning cards list the locks.
+- Verified: docs only; no product code. Next task is still M0-02.
+- Notes: `GET /status`, `GET /me/cert`, and `GET /topology` JSON is the one shape M4-00 must write from design §5 nouns. Invite and join domain tags are `easynet.invite.v1` and `easynet.join.v1`.
+
+### 2026-11-14 · Q15 deferred (out of M4)
+- Done: Q15 → deferred post-M4 / M5 nice-to-have; M4 Done-when uses `127.0.0.1:8080` + `easynet status` only; sketch in `api.md` §10; roadmap M5 split into DNS + mobile tracks; open-questions “Still open” empty.
+- Verified: M4-00 unblocked from DNS; no product code.
+- Notes: Next task still M0-02.
+
+### 2026-11-14 · Docs tidy (plan under docs/, Q15 surfaced)
+- Done: moved `plan.md` → `docs/plan.md`; added `docs/README.md`; spec §8 lists **Q15** under “Still open” (admin.easynet DNS).
+- Verified: links updated in AGENTS/spec/ADR-0001.
+- Notes: Next task still M0-02.
+
+### 2026-11-14 · Dev toolchain + NAT lab (ADR-0011)
+- Done: ADR-0011 Accepted; `docs/dev.md`; AGENTS/spec/roadmap use `just check` + nextest; M0-03/M0-04 cards rewritten (no Makefile).
+- Verified: docs cross-links; no product code.
+- Notes: Next task still M0-02.
+
+### 2026-11-14 · Q11–Q14 + vip_salt + two-knob relay
+- Done: ADR-0008 (supersedes VIP hash in 0004), ADR-0009 (supersedes 0007), ADR-0010 (`0x05` handshake); api/spec/design/conventions updated; Q11–Q14 resolved; Q15 remains optional DNS.
+- Verified: EndpointRecord field order matches owner list; DATA header uses u64 counter; effective relay = Member ∧ relay_capable.
+- Notes: Next task still M0-02.
+
+### 2026-11-14 · Portal access rules (no master IP)
+- Done: Documented loopback-on-every-node vs AdminCert VIP-only vs member VIP forbidden; resolved Q14; added optional Q15 (`admin.easynet` DNS). Updated spec invariant 8, design §How to open, api §8, ADR-0004, conventions/admin, AGENTS.
+- Verified: docs cross-read; no product code.
+- Notes: Next task still M0-02.
+
+### 2026-11-14 · M0-01 + Q1–Q10 lock
+- Done: Accepted ADR-0002..0007; rewrote VIP (ADR-0004), Rust toolchain (0005), offline root/AdminCert (0006), relay policy (0007); froze postcard domain tags + `easynet://` tokens in `docs/api.md`; updated spec/design/glossary/conventions/AGENTS; marked M0-01 done.
+- Verified: `test -f docs/adr/0005-implementation-language.md`; spec no longer says language “not chosen”; `make check` named in `AGENTS.md`.
+- Notes: Remaining open questions Q11–Q14 only (Noise mux framing, RENEW_REQ bytes, revoke reason enum, member portal read access). Next: M0-02 scaffold.
+
+### 2026-11-14 · Steering installed (Full)
+- Done: initial Full steering from `plan.md`.
+- Verified: audit checklist for Full size (documentation pass).
+- Notes: superseded blockers Q1/Q2/Q8 by owner answers above.

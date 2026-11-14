@@ -1,0 +1,7 @@
+---
+description: Session entry point. The contract is AGENTS.md.
+alwaysApply: true
+---
+
+Read and follow AGENTS.md at the repository root. It is the session contract.
+This rule is only an entry point. Layer conventions are listed from AGENTS.md.
