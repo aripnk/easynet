@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M0-02 · Scaffold module layout, toolchain pin, and config parser** — Protocol locks Q16–Q23 are in the spec, api, and ADR-0012..0016. M4-00 still writes three GET JSON bodies before any portal handler. Do not start M1 until M0-04 is done and the owner asks for planning.
+**M0-03 · Green `just check`** — M0-02 left a Rust 1.85.0 workspace, `easynet` / `easynetd` help stubs, and the spec §9 config parser. Do not recreate `rust-toolchain.toml`. `just check` must stay scope gate, then fmt, clippy `-D warnings`, and nextest. Do not start M1 until M0-04 is done and the owner asks for planning.
 
 ## Blocked
 
@@ -19,6 +19,11 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-14 · M0-02 scaffold, toolchain pin, config parser
+- Done: `rust-toolchain.toml` channel `1.85.0` with rustfmt and clippy. Workspace crates `easynet-core`, `easynet-net`, `easynet-admin`, `easynet-cli`, `easynet-ffi` (edition 2024). Core parses spec §9 with serde and toml 0.8; `default_toml()` is the Unix sample. `easynet config init` writes that sample only when the path is absent. Net, admin, and ffi are stubs. No snow, tun-rs, or axum.
+- Verified: `cargo build -p easynet-cli`; `cargo test -p easynet-core` (sample numbers and a truncated document); both binaries' `--help` / `-h` print a line containing `easynet`; `config init --path` writes `relay_max_bps = 1250000` and does not overwrite an existing file; user path uses `$HOME/.config/easynet/easynet.toml`; clippy `-D warnings` and `cargo fmt --check` are clean. `Cargo.lock` and `target/` are not in the card allowlist, so they are not kept in the tree.
+- Notes: Card status in `docs/tasks/M0-bootstrap.md` is unchanged because that path is outside the allowlist. Roadmap M0-02 is ticked. Next task is M0-03.
 
 ### 2026-11-14 · Card scope gate (Q24)
 - Done: `scripts/check-card-scope.sh` and `justfile` (`scope-check` then fmt/clippy/nextest). ADR-0017. The card id is the committed **Next task**; paths come from that card's `**Files:**` line. CI range check is in the `dev.md` workflow that M0-04 copies. Next task remains M0-02.

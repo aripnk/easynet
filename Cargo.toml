@@ -1,0 +1,9 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/easynet-core",
+    "crates/easynet-net",
+    "crates/easynet-admin",
+    "crates/easynet-cli",
+    "crates/easynet-ffi",
+]
