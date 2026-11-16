@@ -18,7 +18,7 @@ never bind the admin portal on a LAN/WAN interface.
    Read the newest entry. Do not read the whole log.
 2. Open the task card it points to in [`docs/tasks/`](docs/tasks/README.md).
    Read only the docs the card lists under **Read first**.
-3. Do that **one card**. Touch only the files it lists.
+3. Do that **one card**. Touch only the files it lists. Step 5 may also set that card's `**Status:**` line.
 4. Run the card's **Acceptance** commands; all must pass. Then run
    `just scope-check` (it must print `card-scope-ok`). After M0-03, also run
    `just check`, which runs the scope gate before fmt, clippy, and nextest.
@@ -129,7 +129,7 @@ Breaking any of these is a bug, regardless of what a task says.
 
 ## Card file scope gate
 
-`just check` runs `scripts/check-card-scope.sh` first. The script reads the active card from the committed **Next task** in `docs/progress.md` and fails if any modified, staged, or untracked file lies outside that card's `**Files:**` list (plus `docs/progress.md`). A path the card does not list is a stop: record it under **Blocked**. Do not widen the allowlist, and do not retarget **Next task**, in order to make the gate pass. [ADR-0017](docs/adr/0017-card-scope-gate.md).
+`just check` runs `scripts/check-card-scope.sh` first. The script reads the active card from the committed **Next task** in `docs/progress.md` and fails if any modified, staged, or untracked file lies outside that card's `**Files:**` list (plus `docs/progress.md`). It also allows `**Status:**` lines in `docs/tasks/` for the active card, and for a card already ticked on `docs/roadmap.md`. Any other edit to a task file still fails. A path the card does not list is a stop: record it under **Blocked**. Do not widen the allowlist, and do not retarget **Next task**, in order to make the gate pass. [ADR-0017](docs/adr/0017-card-scope-gate.md), [ADR-0018](docs/adr/0018-card-status-line.md).
 
 ## Definition of done (per card)
 

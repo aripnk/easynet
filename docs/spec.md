@@ -54,7 +54,7 @@ Numbered rules. Breaking one is a bug even if a task card says otherwise.
 | VIP subnet | `100.64.0.0/10`, MTU `1380` | [ADR-0008](adr/0008-vip-salt-unified-hash.md) |
 | URI scheme | `easynet://` | Q8 locked |
 | Task runner | `just` (`justfile`, `set dotenv-load`) | [ADR-0011](adr/0011-dev-toolchain-and-nat-lab.md) |
-| Check command | **`just check`** → card scope gate, then fmt + clippy `-D warnings` + `cargo nextest` | [ADR-0017](adr/0017-card-scope-gate.md), [dev.md](dev.md) |
+| Check command | **`just check`** → card scope gate (the **Files** list, plus that card's `**Status:**` line), then fmt + clippy `-D warnings` + `cargo nextest` | [ADR-0017](adr/0017-card-scope-gate.md), [ADR-0018](adr/0018-card-status-line.md), [dev.md](dev.md) |
 | NAT integration lab | `docker/nat-lab.yml` (cone / port-restricted / symmetric + local STUN) | ADR-0011, [dev.md](dev.md) |
 | Dep policy | `cargo-deny` / `deny.toml` | ADR-0011 |
 | Config file | `serde` + `toml` 0.8, schema in §9 | this spec |

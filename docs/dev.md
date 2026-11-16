@@ -430,7 +430,7 @@ change that command to a floating `stable` toolchain.
 
 Do not duplicate the session contract here. Agents read [`AGENTS.md`](../AGENTS.md):
 
-- One card, allowlisted files, then **`just check`**
+- One card, allowlisted files, that card's own `**Status:**` line, then **`just check`**
 - Wire constants and VIP hash are in `docs/api.md` / ADR-0008 / ADR-0010
 - No second primary UDP socket; keep state machines in `easynet-core`
 - Prefer lab recipes over host TUN when the card names `just lab-test`
