@@ -1,0 +1,3 @@
+# System linker. Do not set linker or -fuse-ld in this file.
+# Optional, only in a shell that already has lld:
+#   RUSTFLAGS="-C link-arg=-fuse-ld=lld"

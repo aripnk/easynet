@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M0-04 · NAT lab, deny, linker, CI, devcontainer** — Copy `docs/dev.md` §§3–4 byte-for-byte. `just lab-test` must print `nat-lab-topology-ok` only after the topology asserts. Do not start M1 until M0-04 is done and the owner asks for planning.
+**M1-00 · Write M1 task cards (planning)** — Owner-reviewed execution cards for the single-socket puncher. Do not implement M1. Planning needs a strong model or the owner.
 
 ## Blocked
 
@@ -20,15 +20,25 @@ Do not read the whole log unless a card says to.
 
 ## Entries
 
+### 2026-11-16 · Card status lines match the roadmap
+- Done: Owner lock. M0-02, M0-03, and M0-04 are `done` in `docs/tasks/M0-bootstrap.md`. ADR-0018 amends ADR-0017 so the scope gate allows a `**Status:**` line for the active card and for a card already ticked on the roadmap. `AGENTS.md`, `docs/tasks/README.md`, `docs/spec.md`, and `docs/dev.md` say the same thing. M1-00 stays `todo`.
+- Verified: `just scope-check` prints `card-scope-ok (M0-04)`. A non-status edit in the task file still fails the gate.
+- Notes: Next task remains M1-00. Do not write M1 cards until the owner asks to plan.
+
+### 2026-11-16 · M0-04 NAT lab, deny, linker, CI, devcontainer
+- Done: Copied `docs/dev.md` §§3–4 into `docker/nat-lab.yml`, the router and node Dockerfiles and entry scripts, `docker/run-nat-tests.sh`, `deny.toml`, `.cargo/config.toml` (no linker), `.github/workflows/ci.yml`, and `.devcontainer/devcontainer.json`. `justfile` gained `lab-up`, `lab-test`, `lab-down`, and `deny`. Scope job and `just check` stay.
+- Verified: `docker compose -f docker/nat-lab.yml config` exits 0; greps match the coturn image, `random-fully`, and `nat-lab-topology-ok`. `just lab-up`, then `just lab-test` printed `nat-lab-topology-ok` after the cross-LAN ping, conntrack, and symmetric-port asserts, then `just lab-down`. `just check` exits 0 (`card-scope-ok (M0-04)`, fmt, clippy, nextest 2 passed).
+- Notes: Roadmap M0-04 is ticked. `Cargo.lock` and `target/` stay out of the tree. Next task is M1-00. Do not write M1 cards until the owner asks to plan.
+
 ### 2026-11-14 · M0-03 green `just check`
 - Done: `just check` already depended on `scope-check`, then `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo nextest run --workspace`. Left that recipe in place. Did not edit `rust-toolchain.toml`, did not add a Makefile, and did not replace the M0-02 config tests.
 - Verified: `test -f rust-toolchain.toml && test -f justfile`; `just check` exits 0. `Cargo.lock` and `target/` stay out of the tree because they are outside this card's allowlist.
-- Notes: `docs/tasks/M0-bootstrap.md` status stays `todo` because that path is outside the allowlist. Roadmap M0-03 is ticked. Next task is M0-04.
+- Notes: Roadmap M0-03 is ticked. Next task is M0-04.
 
 ### 2026-11-14 · M0-02 scaffold, toolchain pin, config parser
 - Done: `rust-toolchain.toml` channel `1.85.0` with rustfmt and clippy. Workspace crates `easynet-core`, `easynet-net`, `easynet-admin`, `easynet-cli`, `easynet-ffi` (edition 2024). Core parses spec §9 with serde and toml 0.8; `default_toml()` is the Unix sample. `easynet config init` writes that sample only when the path is absent. Net, admin, and ffi are stubs. No snow, tun-rs, or axum.
 - Verified: `cargo build -p easynet-cli`; `cargo test -p easynet-core` (sample numbers and a truncated document); both binaries' `--help` / `-h` print a line containing `easynet`; `config init --path` writes `relay_max_bps = 1250000` and does not overwrite an existing file; user path uses `$HOME/.config/easynet/easynet.toml`; clippy `-D warnings` and `cargo fmt --check` are clean. `Cargo.lock` and `target/` are not in the card allowlist, so they are not kept in the tree.
-- Notes: Card status in `docs/tasks/M0-bootstrap.md` is unchanged because that path is outside the allowlist. Roadmap M0-02 is ticked. Next task is M0-03.
+- Notes: Roadmap M0-02 is ticked. Next task is M0-03.
 
 ### 2026-11-14 · Card scope gate (Q24)
 - Done: `scripts/check-card-scope.sh` and `justfile` (`scope-check` then fmt/clippy/nextest). ADR-0017. The card id is the committed **Next task**; paths come from that card's `**Files:**` line. CI range check is in the `dev.md` workflow that M0-04 copies. Next task remains M0-02.

@@ -14,7 +14,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] M0-01 Choose language and record ADR + check command
 - [x] M0-02 Scaffold module layout and empty daemon entrypoint
 - [x] M0-03 Green `just check`
-- [ ] M0-04 NAT lab skeleton, deny, linker, CI, devcontainer
+- [x] M0-04 NAT lab skeleton, deny, linker, CI, devcontainer
 - [ ] **M1-00 Write task cards (planning — strong model or owner, owner reviews)**
 
 **Done when:** `just check` is green; `rust-toolchain.toml` is the 1.85.0 pin

@@ -17,7 +17,7 @@ punching, TUN data plane, or gossip protocol here.
 ---
 
 ### M0-02 · Scaffold module layout, toolchain pin, and config parser
-- **Status:** todo
+- **Status:** done
 - **Goal:** Workspace builds on Rust 1.85.0; both binaries print help; `easynet config init` writes the spec §9 file; `easynet-core` parses that file.
 - **Read first:** `docs/spec.md` §4 Repository layout and §9; `docs/adr/0005-implementation-language.md`; `docs/adr/0016-pinned-toolchain-and-system-linker.md`; `docs/conventions/transport.md` (first line).
 - **Files:** + `rust-toolchain.toml`; + `Cargo.toml` (workspace); + `crates/easynet-core/Cargo.toml`; + `crates/easynet-core/src/lib.rs`; + `crates/easynet-core/src/config.rs`; + `crates/easynet-net/Cargo.toml`; + `crates/easynet-net/src/lib.rs`; + `crates/easynet-admin/Cargo.toml`; + `crates/easynet-admin/src/lib.rs`; + `crates/easynet-cli/Cargo.toml`; + `crates/easynet-cli/src/bin/easynetd.rs`; + `crates/easynet-cli/src/bin/easynet.rs`; + `crates/easynet-ffi/Cargo.toml`; + `crates/easynet-ffi/src/lib.rs`; ~ `docs/roadmap.md`; ~ `docs/progress.md`
@@ -47,7 +47,7 @@ punching, TUN data plane, or gossip protocol here.
 ---
 
 ### M0-03 · Green `just check`
-- **Status:** todo
+- **Status:** done
 - **Goal:** `just check` runs the existing scope gate, then fmt, clippy `-D warnings`, and `cargo nextest` on the M0-02 skeleton.
 - **Read first:** `AGENTS.md` §Commands; `docs/adr/0011-dev-toolchain-and-nat-lab.md`; `docs/adr/0016-pinned-toolchain-and-system-linker.md`; `docs/adr/0017-card-scope-gate.md`; `docs/dev.md` §2.
 - **Files:** ~ `justfile`; ~ `docs/roadmap.md`; ~ `docs/progress.md`
@@ -67,7 +67,7 @@ punching, TUN data plane, or gossip protocol here.
 ---
 
 ### M0-04 · NAT lab, deny, linker, CI, devcontainer
-- **Status:** todo
+- **Status:** done
 - **Goal:** The files in `docs/dev.md` §§3–4 exist byte-for-byte, and `just lab-test` prints `nat-lab-topology-ok` only after the topology asserts.
 - **Read first:** `docs/dev.md` §§3–4; `docs/adr/0011-dev-toolchain-and-nat-lab.md`; `docs/adr/0016-pinned-toolchain-and-system-linker.md`.
 - **Files:** + `docker/nat-lab.yml`; + `docker/router.Dockerfile`; + `docker/node.Dockerfile`; + `docker/router-entry.sh`; + `docker/node-entry.sh`; + `docker/run-nat-tests.sh`; + `deny.toml`; + `.cargo/config.toml`; + `.github/workflows/ci.yml`; + `.devcontainer/devcontainer.json`; ~ `justfile`; ~ `docs/roadmap.md`; ~ `docs/progress.md`

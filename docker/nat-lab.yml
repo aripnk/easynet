@@ -1,0 +1,113 @@
+name: easynet-nat-lab
+
+networks:
+  wan_net:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+          gateway: 172.30.0.1
+  lan_a:
+    ipam:
+      config:
+        - subnet: 10.10.1.0/24
+          gateway: 10.10.1.254
+  lan_b:
+    ipam:
+      config:
+        - subnet: 10.10.2.0/24
+          gateway: 10.10.2.254
+  lan_c:
+    ipam:
+      config:
+        - subnet: 10.10.3.0/24
+          gateway: 10.10.3.254
+
+services:
+  stun:
+    image: coturn/coturn:4.6.2-alpine
+    networks:
+      wan_net:
+        ipv4_address: 172.30.0.10
+    command:
+      - --stun-only
+      - --no-auth
+      - --listening-port=3478
+      - --listening-ip=172.30.0.10
+
+  router-a:
+    build:
+      context: .
+      dockerfile: router.Dockerfile
+    cap_add: [NET_ADMIN]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    entrypoint: ["/bin/sh", "/entry.sh", "cone", "10.10.1.0/24"]
+    networks:
+      wan_net:
+        ipv4_address: 172.30.0.11
+      lan_a:
+        ipv4_address: 10.10.1.1
+
+  node-a:
+    build:
+      context: .
+      dockerfile: node.Dockerfile
+    cap_add: [NET_ADMIN]
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    entrypoint: ["/bin/sh", "/entry.sh", "10.10.1.1"]
+    networks:
+      lan_a:
+        ipv4_address: 10.10.1.2
+
+  router-b:
+    build:
+      context: .
+      dockerfile: router.Dockerfile
+    cap_add: [NET_ADMIN]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    entrypoint: ["/bin/sh", "/entry.sh", "restricted", "10.10.2.0/24"]
+    networks:
+      wan_net:
+        ipv4_address: 172.30.0.12
+      lan_b:
+        ipv4_address: 10.10.2.1
+
+  node-b:
+    build:
+      context: .
+      dockerfile: node.Dockerfile
+    cap_add: [NET_ADMIN]
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    entrypoint: ["/bin/sh", "/entry.sh", "10.10.2.1"]
+    networks:
+      lan_b:
+        ipv4_address: 10.10.2.2
+
+  router-c:
+    build:
+      context: .
+      dockerfile: router.Dockerfile
+    cap_add: [NET_ADMIN]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    entrypoint: ["/bin/sh", "/entry.sh", "symmetric", "10.10.3.0/24"]
+    networks:
+      wan_net:
+        ipv4_address: 172.30.0.13
+      lan_c:
+        ipv4_address: 10.10.3.1
+
+  node-c:
+    build:
+      context: .
+      dockerfile: node.Dockerfile
+    cap_add: [NET_ADMIN]
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    entrypoint: ["/bin/sh", "/entry.sh", "10.10.3.1"]
+    networks:
+      lan_c:
+        ipv4_address: 10.10.3.2

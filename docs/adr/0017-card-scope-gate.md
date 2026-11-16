@@ -1,6 +1,6 @@
 # ADR-0017: just check rejects paths outside the active card
 
-- **Status:** Accepted
+- **Status:** Accepted. A card's own `**Status:**` line is allowed by [ADR-0018](0018-card-status-line.md). Every other path outside **Files** still fails.
 - **Date:** 2026-11-14
 - **Amends:** the `just check` recipe in [ADR-0011](0011-dev-toolchain-and-nat-lab.md). Fmt, clippy, and nextest stay.
 

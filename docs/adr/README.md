@@ -22,6 +22,7 @@ Process: [ADR-0001](0001-record-architecture-decisions.md).
 | [0014](0014-swim-failure-detector.md) | SWIM payloads and failure-detector timers | Accepted |
 | [0015](0015-admin-reverse-proxy-and-auth.md) | Loopback reverse proxy, IPC, admin HTTP shapes | Accepted |
 | [0016](0016-pinned-toolchain-and-system-linker.md) | Rust 1.85.0 file and system linker | Accepted |
-| [0017](0017-card-scope-gate.md) | just check rejects paths outside the active card | Accepted |
+| [0017](0017-card-scope-gate.md) | just check rejects paths outside the active card | Accepted (status line amended by 0018) |
+| [0018](0018-card-status-line.md) | Card status line is inside the scope gate | Accepted |
 
 When adding an ADR, add a row here in the same change.

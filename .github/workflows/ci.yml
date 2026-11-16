@@ -1,5 +1,3 @@
-# Rust fmt/clippy/nextest and the NAT lab job are added by M0-04
-# from the fenced workflow in docs/dev.md. Do not remove the scope job.
 name: ci
 on:
   push:
@@ -26,3 +24,30 @@ jobs:
           else
             echo "card-scope-ok (no base ref)"
           fi
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          components: rustfmt, clippy
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - run: cargo fmt --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo nextest run --workspace
+  lab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - run: just lab-up
+      - run: just lab-test
+      - if: always()
+        run: just lab-down

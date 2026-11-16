@@ -1,6 +1,6 @@
 # ADR-0011: just + nextest check, pinned toolchain, NAT lab
 
-- **Status:** Accepted. Toolchain-file contents and the linker (items 1 and 4) are amended by [ADR-0016](0016-pinned-toolchain-and-system-linker.md). The `just check` recipe is preceded by `scope-check` ([ADR-0017](0017-card-scope-gate.md)). `just`, nextest, NAT lab, deny, devcontainer, and CI remain in force.
+- **Status:** Accepted. Toolchain-file contents and the linker (items 1 and 4) are amended by [ADR-0016](0016-pinned-toolchain-and-system-linker.md). The `just check` recipe is preceded by `scope-check` ([ADR-0017](0017-card-scope-gate.md); a card's own status line is [ADR-0018](0018-card-status-line.md)). `just`, nextest, NAT lab, deny, devcontainer, and CI remain in force.
 - **Date:** 2026-11-14
 - **Supersedes:** Check-command wording in [ADR-0005](0005-implementation-language.md) (`make check` / `cargo test`). Language, crates, and deps in ADR-0005 remain in force.
 

@@ -1,0 +1,6 @@
+{
+  "name": "easynet",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "runArgs": ["--cap-add=NET_ADMIN", "--device=/dev/net/tun"],
+  "postCreateCommand": "apt-get update && apt-get install -y iptables iproute2 conntrack curl ca-certificates && curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none && . \"$HOME/.cargo/env\" && cargo install cargo-nextest --locked && cargo install cargo-deny --locked && cargo install just --locked"
+}
