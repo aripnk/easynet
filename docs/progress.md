@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M1-00 · Write M1 task cards (planning)** — Owner-reviewed execution cards for the single-socket puncher. Do not implement M1. Planning needs a strong model or the owner.
+**M1-01 · Demux and STUN codec** — Classify datagrams in api §1 order and parse a STUN Binding Success in `easynet-core`. No socket, no lab.
 
 ## Blocked
 
@@ -19,6 +19,16 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-17 · M1-00 accepted
+- Done: Owner accepted `docs/tasks/M1-puncher.md`. M1-00 is `done`. Roadmap M1-00 is ticked.
+- Verified: review only; no puncher code in this step.
+- Notes: Next task is M1-01.
+
+### 2026-11-16 · M1-00 puncher cards drafted
+- Done: Wrote `docs/tasks/M1-puncher.md` (M1-01..M1-06) and ticked nothing. Order is demux and STUN codec, one-socket STUN in the lab, invite encode/decode, `PUNCH` codec and the 30 s / 4096 cache, mutual punch on node-a and node-b, then the 15 s keepalive. Lab lines append after `nat-lab-topology-ok`. No new UDP type, no STUN crate, no second steady-state socket.
+- Verified: `just scope-check` prints `card-scope-ok (M1-00)`.
+- Notes: **Next task stays M1-00** until the owner accepts the card file. Do not start M1-01 before that review.
 
 ### 2026-11-16 · Card status lines match the roadmap
 - Done: Owner lock. M0-02, M0-03, and M0-04 are `done` in `docs/tasks/M0-bootstrap.md`. ADR-0018 amends ADR-0017 so the scope gate allows a `**Status:**` line for the active card and for a card already ticked on the roadmap. `AGENTS.md`, `docs/tasks/README.md`, `docs/spec.md`, and `docs/dev.md` say the same thing. M1-00 stays `todo`.

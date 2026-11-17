@@ -15,18 +15,24 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] M0-02 Scaffold module layout and empty daemon entrypoint
 - [x] M0-03 Green `just check`
 - [x] M0-04 NAT lab skeleton, deny, linker, CI, devcontainer
-- [ ] **M1-00 Write task cards (planning — strong model or owner, owner reviews)**
+- [x] **M1-00 Write task cards (planning — strong model or owner, owner reviews)**
 
 **Done when:** `just check` is green; `rust-toolchain.toml` is the 1.85.0 pin
 from ADR-0016; `justfile` exists; `docker compose -f docker/nat-lab.yml config`
 succeeds; `just lab-test` proves the topology in [`dev.md`](dev.md) §3 (not an
 empty success); CI + devcontainer exist; `easynetd` / `easynet` build.
 
-## M1 · Single-socket puncher
+## M1 · Single-socket puncher — [task cards](tasks/M1-puncher.md)
 
-Execution cards are not written yet. [`M1-00`](tasks/M0-bootstrap.md) writes
-them. Do not start `M1-01` until the owner has reviewed that file. Demux and
+Do not start `M1-01` until the owner has reviewed that file. Demux and
 the punch cache are already locked (ADR-0012).
+
+- [ ] M1-01 Demux and STUN codec
+- [ ] M1-02 One socket STUN in the lab
+- [ ] M1-03 Invite encode and decode
+- [ ] M1-04 PUNCH codec and replay cache
+- [ ] M1-05 Mutual punch on the cone path
+- [ ] M1-06 Fifteen-second keepalive
 
 **Done when:** Two NATed peers (prefer `just lab-test` cone path) exchange
 `easynet://invite/…`, complete `PUNCH` SYN/ACK on one UDP port, hold 15s

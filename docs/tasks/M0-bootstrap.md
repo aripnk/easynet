@@ -93,7 +93,7 @@ punching, TUN data plane, or gossip protocol here.
 ---
 
 ### M1-00 · Write M1 task cards (planning)
-- **Status:** todo
+- **Status:** done
 - **Goal:** Owner-reviewed execution cards for M1 (single-socket puncher) that use `just check` and, where needed, `just lab-test`.
 - **Read first:** `docs/spec.md` §6; `docs/api.md` §1, §3, and §7.1; `docs/dev.md` §3; `docs/adr/0003-single-socket-noise.md`; `docs/adr/0012-stun-demux-and-relay-handshake.md`; `docs/adr/0016-pinned-toolchain-and-system-linker.md`; `docs/tasks/README.md` §Planning tasks.
 - **Steps:**
