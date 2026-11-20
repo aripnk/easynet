@@ -80,7 +80,7 @@ Locked, and not to be reopened by any card below:
 ---
 
 ### M1-04 · PUNCH codec and replay cache
-- **Status:** todo
+- **Status:** done
 - **Goal:** `easynet-core` builds, verifies, and replay-filters `PUNCH` frames using the api §3 numbers.
 - **Read first:** `docs/api.md` §3; `docs/spec.md` §5 (`node_id`) and §6 (250 ms, 30 s); `docs/tasks/M1-puncher.md` (M1-03).
 - **Files:** + `crates/easynet-core/src/punch.rs`; ~ `crates/easynet-core/src/lib.rs`

@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M1-04 · PUNCH codec and replay cache** — Build and verify `PUNCH` frames in `easynet-core` with the 30 s skew and 4096-entry replay cache. No sockets.
+**M1-05 · Mutual punch on the cone path** — `node-a` and `node-b` exchange invites with STUN reflexive candidates and complete `PUNCH` SYN/ACK on one UDP port each.
 
 ## Blocked
 
@@ -19,6 +19,11 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-20 · M1-04 PUNCH codec and replay cache
+- Done: `encode_punch` / `verify_punch` sign the raw bytes before the last 64. `sender_node_id` is the first 16 bytes of `SHA256(ed25519_pub)`. `PunchCache` keeps 4096 `(sender, nonce)` pairs for 30_000 ms and drops the least recently used pair when full. The cache takes `now_ms` from the caller.
+- Verified: a frame 29_999 ms off is accepted; 30_001 ms is `Skew`; the same pair at 30_000 ms is `Replay`; the 4097th pair evicts the oldest; a short frame and a bad signature fail. `just check` passed.
+- Notes: M1-04 status is `done`. The roadmap checkbox stays open because `docs/roadmap.md` is outside this card's allowlist. Next task is M1-05.
 
 ### 2026-11-20 · M1-03 invite encode and decode
 - Done: `encode_invite` and `decode_invite` sign `InviteToken` as `easynet://invite/` plus unpadded base64url of `postcard(body) || sig[64]`. The signature covers `easynet.invite.v1\0` || postcard body. `mesh_id` is the first 8 bytes of `SHA256(root_pub_key)`. Addresses use the packed api §2 layout. No base64 crate and no socket.
