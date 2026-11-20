@@ -39,7 +39,7 @@ Locked, and not to be reopened by any card below:
 ---
 
 ### M1-02 · One socket STUN in the lab
-- **Status:** todo
+- **Status:** done
 - **Goal:** `easynet stun` binds one UDP socket, sends one Binding Request to the lab STUN server, and prints the reflexive address from inside `node-a`.
 - **Read first:** `docs/api.md` §1; `docs/adr/0003-single-socket-noise.md`; `docs/dev.md` §3; `docs/tasks/M1-puncher.md` (M1-01).
 - **Files:** + `crates/easynet-net/src/stun_io.rs`; ~ `crates/easynet-net/src/lib.rs`; ~ `crates/easynet-net/Cargo.toml`; ~ `crates/easynet-cli/Cargo.toml`; ~ `crates/easynet-cli/src/bin/easynet.rs`; ~ `docker/run-nat-tests.sh`

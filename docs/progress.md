@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M1-02 · One socket STUN in the lab** — `easynet stun` binds one UDP socket inside `node-a` and prints a reflexive address in `172.30.0.0/24`. Append the lab assert after `nat-lab-topology-ok`.
+**M1-03 · Invite encode and decode** — `easynet-core` emits and parses `easynet://invite/…` as a signed `InviteToken`. No socket and no lab.
 
 ## Blocked
 
@@ -19,6 +19,11 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-20 · M1-02 one socket STUN in the lab
+- Done: `easynet stun --bind IP:PORT --server HOST:PORT` binds one UDP socket, sends one Binding Request, and prints `reflexive=IP:PORT`. The lab script appends after `nat-lab-topology-ok`. Every host builds that binary in `rust:1.85.0-alpine` for the Docker engine's architecture, then the script copies it into `node-a`.
+- Verified: `just lab-test` printed `nat-lab-topology-ok`, then `reflexive=172.30.0.11:51820`, then `m1-stun-ok`. `just lab-down` and `just check` passed.
+- Notes: M1-02 status is `done`. The roadmap checkbox stays open because `docs/roadmap.md` is outside this card's allowlist. Next task is M1-03.
 
 ### 2026-11-17 · M1-01 demux and STUN codec
 - Done: `easynet-core` classifies datagrams in api §1 order and builds a 20-byte Binding Request. `parse_binding_success` prefers XOR-MAPPED-ADDRESS `0x0020` and falls back to MAPPED-ADDRESS `0x0001`. No new crate and no socket.

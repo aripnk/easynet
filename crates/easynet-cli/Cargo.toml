@@ -14,3 +14,4 @@ path = "src/bin/easynet.rs"
 
 [dependencies]
 easynet-core = { path = "../easynet-core" }
+easynet-net = { path = "../easynet-net" }

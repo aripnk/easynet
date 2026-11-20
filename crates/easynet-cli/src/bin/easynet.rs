@@ -7,6 +7,7 @@ fn main() {
             println!("easynet");
         }
         Some("config") => config_cmd(args),
+        Some("stun") => stun_cmd(args),
         Some(_) => {
             println!("easynet");
         }
@@ -63,6 +64,54 @@ fn config_init(mut args: impl Iterator<Item = String>) {
         }
     }
     println!("{}", path.display());
+}
+
+fn stun_cmd(mut args: impl Iterator<Item = String>) {
+    let mut bind = None;
+    let mut server = None;
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--help" | "-h" => {
+                println!("easynet");
+                return;
+            }
+            "--bind" => bind = args.next(),
+            "--server" => server = args.next(),
+            other => {
+                eprintln!("easynet: unexpected argument {other}");
+                std::process::exit(2);
+            }
+        }
+    }
+    let Some(bind) = bind else {
+        eprintln!("easynet: --bind is required");
+        std::process::exit(2);
+    };
+    let Some(server) = server else {
+        eprintln!("easynet: --server is required");
+        std::process::exit(2);
+    };
+    let bind = match bind.parse() {
+        Ok(addr) => addr,
+        Err(_) => {
+            eprintln!("easynet: --bind is not IP:PORT");
+            std::process::exit(2);
+        }
+    };
+    let server = match server.parse() {
+        Ok(addr) => addr,
+        Err(_) => {
+            eprintln!("easynet: --server is not IP:PORT");
+            std::process::exit(2);
+        }
+    };
+    match easynet_net::binding_reflexive_blocking(bind, server) {
+        Ok(addr) => println!("reflexive={addr}"),
+        Err(err) => {
+            eprintln!("easynet: {err}");
+            std::process::exit(1);
+        }
+    }
 }
 
 /// Spec §9 user path. Does not require root and does not write `/etc`.

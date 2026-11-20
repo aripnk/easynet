@@ -3,3 +3,7 @@ name = "easynet-net"
 version = "0.1.0"
 edition = "2024"
 publish = false
+
+[dependencies]
+easynet-core = { path = "../easynet-core" }
+tokio = { version = "1", features = ["net", "time", "rt-multi-thread", "macros"] }
