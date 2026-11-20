@@ -97,12 +97,12 @@ Locked, and not to be reopened by any card below:
 ---
 
 ### M1-05 · Mutual punch on the cone path
-- **Status:** todo
+- **Status:** done
 - **Goal:** `node-a` (cone) and `node-b` (restricted) exchange invites carrying STUN reflexive candidates and complete `PUNCH` SYN/ACK on one UDP port each.
 - **Read first:** `docs/api.md` §3 and §7.1; `docs/dev.md` §3; `docs/adr/0003-single-socket-noise.md`; `docs/tasks/M1-puncher.md` (M1-02, M1-04).
-- **Files:** + `crates/easynet-net/src/punch_io.rs`; ~ `crates/easynet-net/src/lib.rs`; ~ `crates/easynet-cli/src/bin/easynet.rs`; ~ `docker/run-nat-tests.sh`
+- **Files:** + `crates/easynet-net/src/punch_io.rs`; ~ `crates/easynet-net/src/lib.rs`; ~ `crates/easynet-cli/src/bin/easynet.rs`; ~ `docker/run-nat-tests.sh`; + `crates/easynet-core/src/identity.rs`; ~ `crates/easynet-core/src/lib.rs`
 - **Steps:**
-  1. `easynet invite issue --state-dir DIR --candidate HOST:PORT` creates ed25519, x25519, and root key files in `DIR` when they are absent (`0600`), reuses them when present, and prints one `easynet://invite/…` line. The single candidate is that `HOST:PORT` packed as `SocketAddrBin`. `mesh_id` is derived from the stored root public key.
+  1. `easynet invite issue --state-dir DIR --candidate HOST:PORT` generates keys when they are absent (`0600`) and reuses them when present. `node.key` is the ed25519 secret followed by the x25519 secret. `root.key` is the root ed25519 secret. The user does not supply either file. It prints one `easynet://invite/…` line. The single candidate is that `HOST:PORT` packed as `SocketAddrBin`. `mesh_id` is derived from the stored root public key. `ed25519_public` and `x25519_public` live in `easynet-core`.
   2. `easynet punch --state-dir DIR --bind IP:PORT --peer-uri URI` binds **one** UDP socket. It sends `PUNCH` `SYN` (flags `0x01`) to every candidate in the peer invite every **250 ms**, from that socket. On a valid `ACK` (flags bit1 set, `verify_punch` succeeds for the peer’s ed25519 key) it prints `punch-ack` and exits 0. Exit 1 after 5 seconds without an ACK. Reply to a valid `SYN` with one `ACK` to the packet’s source address, not to the address inside the frame. Do not answer an `ACK` with another frame.
   3. Append after `m1-stun-ok` in `docker/run-nat-tests.sh`. Rebuild the musl binary the same way as M1-02. Copy it to `node-a` and `node-b`. On each, run `stun` on `0.0.0.0:51820` against `172.30.0.10:3478`, then `invite issue` with **that reflexive** `IP:PORT` as the only candidate. Pass each URI to the other side. Start both `punch` processes. Require both stdout streams to contain `punch-ack`, then `echo m1-punch-ok`. Do not use `node-c`. Do not put `10.10.1.2` or `10.10.2.2` in the invite.
 - **Acceptance:**
