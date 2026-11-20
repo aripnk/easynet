@@ -3,6 +3,7 @@
 mod addr;
 mod config;
 mod demux;
+mod identity;
 mod invite;
 mod punch;
 mod stun;
@@ -10,6 +11,7 @@ mod stun;
 pub use addr::{AddrError, pack_socket_addr, unpack_socket_addr};
 pub use config::{Config, default_toml, parse_toml};
 pub use demux::{Class, classify};
+pub use identity::{ed25519_public, x25519_public};
 pub use invite::{InviteError, InviteToken, decode_invite, encode_invite, mesh_id};
 pub use punch::{
     PUNCH_ACK, PUNCH_SYN, PunchCache, PunchError, VerifiedPunch, encode_punch, node_id,

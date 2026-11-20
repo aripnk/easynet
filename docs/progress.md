@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M1-05 · Mutual punch on the cone path** — `node-a` and `node-b` exchange invites with STUN reflexive candidates and complete `PUNCH` SYN/ACK on one UDP port each.
+**M1-06 · Fifteen-second keepalive** — After `PUNCH` ACK, each side sends one keepalive `PUNCH` at 15 seconds and does not answer that frame.
 
 ## Blocked
 
@@ -19,6 +19,11 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-20 · M1-05 mutual punch on the cone path
+- Done: The binary generates `node.key` (ed25519 secret || x25519 secret) and `root.key` (root ed25519 secret), mode `0600`, and reuses them. The user supplies neither. `ed25519_public` and `x25519_public` are in `easynet-core`, which the owner allowed for this card. `invite issue` prints one invite. `punch` uses one UDP socket, probes every 250 ms, answers a SYN from the packet source, and prints `punch-ack`.
+- Verified: `just lab-test` printed `nat-lab-topology-ok`, `reflexive=172.30.0.11:51820`, `m1-stun-ok`, `punch-ack` on both nodes, and `m1-punch-ok`. Local two-socket test passed. `just check` passed.
+- Notes: M1-05 status is `done`. The roadmap checkbox stays open because `docs/roadmap.md` is outside this card. `root.key` is still raw; passphrase encryption stays with later `easynet init`. The lab routers masquerade, so the test opens UDP `51820` on router-a and router-b for the reflexive port. Next task is M1-06.
 
 ### 2026-11-20 · M1-04 PUNCH codec and replay cache
 - Done: `encode_punch` / `verify_punch` sign the raw bytes before the last 64. `sender_node_id` is the first 16 bytes of `SHA256(ed25519_pub)`. `PunchCache` keeps 4096 `(sender, nonce)` pairs for 30_000 ms and drops the least recently used pair when full. The cache takes `now_ms` from the caller.

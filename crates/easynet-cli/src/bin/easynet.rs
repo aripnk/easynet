@@ -8,6 +8,8 @@ fn main() {
         }
         Some("config") => config_cmd(args),
         Some("stun") => stun_cmd(args),
+        Some("invite") => invite_cmd(args),
+        Some("punch") => punch_cmd(args),
         Some(_) => {
             println!("easynet");
         }
@@ -107,6 +109,102 @@ fn stun_cmd(mut args: impl Iterator<Item = String>) {
     };
     match easynet_net::binding_reflexive_blocking(bind, server) {
         Ok(addr) => println!("reflexive={addr}"),
+        Err(err) => {
+            eprintln!("easynet: {err}");
+            std::process::exit(1);
+        }
+    }
+}
+
+fn invite_cmd(mut args: impl Iterator<Item = String>) {
+    match args.next().as_deref() {
+        Some("--help") | Some("-h") | None => println!("easynet"),
+        Some("issue") => invite_issue(args),
+        Some(_) => println!("easynet"),
+    }
+}
+
+fn invite_issue(mut args: impl Iterator<Item = String>) {
+    let mut state_dir = None;
+    let mut candidate = None;
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--help" | "-h" => {
+                println!("easynet");
+                return;
+            }
+            "--state-dir" => state_dir = args.next(),
+            "--candidate" => candidate = args.next(),
+            other => {
+                eprintln!("easynet: unexpected argument {other}");
+                std::process::exit(2);
+            }
+        }
+    }
+    let Some(state_dir) = state_dir else {
+        eprintln!("easynet: --state-dir is required");
+        std::process::exit(2);
+    };
+    let Some(candidate) = candidate else {
+        eprintln!("easynet: --candidate is required");
+        std::process::exit(2);
+    };
+    let candidate = match candidate.parse() {
+        Ok(addr) => addr,
+        Err(_) => {
+            eprintln!("easynet: --candidate is not IP:PORT");
+            std::process::exit(2);
+        }
+    };
+    match easynet_net::issue_invite(std::path::Path::new(&state_dir), candidate) {
+        Ok(uri) => println!("{uri}"),
+        Err(err) => {
+            eprintln!("easynet: {err}");
+            std::process::exit(1);
+        }
+    }
+}
+
+fn punch_cmd(mut args: impl Iterator<Item = String>) {
+    let mut state_dir = None;
+    let mut bind = None;
+    let mut peer_uri = None;
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--help" | "-h" => {
+                println!("easynet");
+                return;
+            }
+            "--state-dir" => state_dir = args.next(),
+            "--bind" => bind = args.next(),
+            "--peer-uri" => peer_uri = args.next(),
+            other => {
+                eprintln!("easynet: unexpected argument {other}");
+                std::process::exit(2);
+            }
+        }
+    }
+    let Some(state_dir) = state_dir else {
+        eprintln!("easynet: --state-dir is required");
+        std::process::exit(2);
+    };
+    let Some(bind) = bind else {
+        eprintln!("easynet: --bind is required");
+        std::process::exit(2);
+    };
+    let Some(peer_uri) = peer_uri else {
+        eprintln!("easynet: --peer-uri is required");
+        std::process::exit(2);
+    };
+    let bind = match bind.parse() {
+        Ok(addr) => addr,
+        Err(_) => {
+            eprintln!("easynet: --bind is not IP:PORT");
+            std::process::exit(2);
+        }
+    };
+    match easynet_net::punch_until_ack_blocking(std::path::Path::new(&state_dir), bind, &peer_uri) {
+        Ok(()) => println!("punch-ack"),
         Err(err) => {
             eprintln!("easynet: {err}");
             std::process::exit(1);

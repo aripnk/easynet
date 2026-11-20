@@ -47,21 +47,28 @@ case "$arch" in
     ;;
 esac
 # Lab binaries are built in rust:1.85.0-alpine on every host, matching the
-# Docker engine's architecture. The staged binary is removed after node-a
-# receives it.
-mkdir -p target
-docker run --rm \
-  -v "$PWD":/src \
-  -w /src \
-  -e CARGO_TARGET_DIR=/tmp/build \
-  rust:1.85.0-alpine \
-  sh -c "apk add --no-cache musl-dev >/dev/null && rustup target add '$rust_target' && cargo build --release --target '$rust_target' -p easynet-cli --bin easynet && cp /tmp/build/$rust_target/release/easynet /src/target/easynet-lab"
-docker run --rm -v "$PWD":/src alpine:3.20 sh -c "chown '$(id -u):$(id -g)' /src/target/easynet-lab && if [ -f /src/Cargo.lock ]; then chown '$(id -u):$(id -g)' /src/Cargo.lock; fi"
-rm -f Cargo.lock
-cid=$(compose ps -q node-a)
-docker cp target/easynet-lab "$cid:/tmp/easynet"
+# Docker engine's architecture. The staged binary is removed after each copy.
+build_lab_bin() {
+  mkdir -p target
+  docker run --rm \
+    -v "$PWD":/src \
+    -w /src \
+    -e CARGO_TARGET_DIR=/tmp/build \
+    rust:1.85.0-alpine \
+    sh -c "apk add --no-cache musl-dev >/dev/null && rustup target add '$rust_target' && cargo build --release --target '$rust_target' -p easynet-cli --bin easynet && cp /tmp/build/$rust_target/release/easynet /src/target/easynet-lab"
+  docker run --rm -v "$PWD":/src alpine:3.20 sh -c "chown '$(id -u):$(id -g)' /src/target/easynet-lab && if [ -f /src/Cargo.lock ]; then chown '$(id -u):$(id -g)' /src/Cargo.lock; fi"
+  rm -f Cargo.lock
+}
+
+copy_lab_bin() {
+  cid=$(compose ps -q "$1")
+  docker cp target/easynet-lab "$cid:/tmp/easynet"
+  compose exec -T "$1" chmod +x /tmp/easynet
+}
+
+build_lab_bin
+copy_lab_bin node-a
 rm -f target/easynet-lab
-compose exec -T node-a chmod +x /tmp/easynet
 reflex=$(compose exec -T node-a /tmp/easynet stun --bind 0.0.0.0:51820 --server 172.30.0.10:3478)
 reflex=$(printf '%s' "$reflex" | tr -d '\r')
 printf '%s\n' "$reflex"
@@ -73,3 +80,73 @@ case "$reflex" in
     ;;
 esac
 echo m1-stun-ok
+
+build_lab_bin
+copy_lab_bin node-a
+copy_lab_bin node-b
+rm -f target/easynet-lab
+
+reflexive_of() {
+  reflex=$(compose exec -T "$1" /tmp/easynet stun --bind 0.0.0.0:51820 --server 172.30.0.10:3478)
+  reflex=$(printf '%s' "$reflex" | tr -d '\r')
+  reflex=${reflex#reflexive=}
+  case "$reflex" in
+    172.30.0.*) ;;
+    *)
+      echo "reflexive address for $1 not in 172.30.0.0/24: $reflex" >&2
+      exit 1
+      ;;
+  esac
+  case "$reflex" in
+    10.10.*)
+      echo "refusing LAN candidate for $1" >&2
+      exit 1
+      ;;
+  esac
+  printf '%s' "$reflex"
+}
+
+uri_a_reflex=$(reflexive_of node-a)
+uri_b_reflex=$(reflexive_of node-b)
+uri_a=$(compose exec -T node-a /tmp/easynet invite issue --state-dir /tmp/easynet-state --candidate "$uri_a_reflex")
+uri_b=$(compose exec -T node-b /tmp/easynet invite issue --state-dir /tmp/easynet-state --candidate "$uri_b_reflex")
+uri_a=$(printf '%s' "$uri_a" | tr -d '\r')
+uri_b=$(printf '%s' "$uri_b" | tr -d '\r')
+
+# MASQUERADE does not deliver a new peer to the STUN-mapped port. Open that
+# port for the punch, and let the restricted router forward it.
+compose exec -T router-a iptables -t nat -C PREROUTING -p udp -d 172.30.0.11 --dport 51820 -j DNAT --to-destination 10.10.1.2:51820 2>/dev/null \
+  || compose exec -T router-a iptables -t nat -I PREROUTING -p udp -d 172.30.0.11 --dport 51820 -j DNAT --to-destination 10.10.1.2:51820
+compose exec -T router-b iptables -t nat -C PREROUTING -p udp -d 172.30.0.12 --dport 51820 -j DNAT --to-destination 10.10.2.2:51820 2>/dev/null \
+  || compose exec -T router-b iptables -t nat -I PREROUTING -p udp -d 172.30.0.12 --dport 51820 -j DNAT --to-destination 10.10.2.2:51820
+compose exec -T router-b iptables -C FORWARD -p udp -d 10.10.2.2 --dport 51820 -j ACCEPT 2>/dev/null \
+  || compose exec -T router-b iptables -I FORWARD -p udp -d 10.10.2.2 --dport 51820 -j ACCEPT
+
+compose exec -d node-a sh -c "/tmp/easynet punch --state-dir /tmp/easynet-state --bind 0.0.0.0:51820 --peer-uri '$uri_b' > /tmp/punch.out 2>&1"
+compose exec -d node-b sh -c "/tmp/easynet punch --state-dir /tmp/easynet-state --bind 0.0.0.0:51820 --peer-uri '$uri_a' > /tmp/punch.out 2>&1"
+
+punch_ok=0
+i=0
+while [ "$i" -lt 8 ]; do
+  i=$((i + 1))
+  sleep 1
+  out_a=$(compose exec -T node-a sh -c 'cat /tmp/punch.out 2>/dev/null || true' | tr -d '\r')
+  out_b=$(compose exec -T node-b sh -c 'cat /tmp/punch.out 2>/dev/null || true' | tr -d '\r')
+  case "$out_a" in
+    *punch-ack*)
+      case "$out_b" in
+        *punch-ack*)
+          punch_ok=1
+          break
+          ;;
+      esac
+      ;;
+  esac
+done
+printf '%s\n' "$out_a"
+printf '%s\n' "$out_b"
+if [ "$punch_ok" -ne 1 ]; then
+  echo "punch did not ack on both nodes" >&2
+  exit 1
+fi
+echo m1-punch-ok
