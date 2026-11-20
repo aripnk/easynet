@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M1-03 · Invite encode and decode** — `easynet-core` emits and parses `easynet://invite/…` as a signed `InviteToken`. No socket and no lab.
+**M1-04 · PUNCH codec and replay cache** — Build and verify `PUNCH` frames in `easynet-core` with the 30 s skew and 4096-entry replay cache. No sockets.
 
 ## Blocked
 
@@ -19,6 +19,11 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-20 · M1-03 invite encode and decode
+- Done: `encode_invite` and `decode_invite` sign `InviteToken` as `easynet://invite/` plus unpadded base64url of `postcard(body) || sig[64]`. The signature covers `easynet.invite.v1\0` || postcard body. `mesh_id` is the first 8 bytes of `SHA256(root_pub_key)`. Addresses use the packed api §2 layout. No base64 crate and no socket.
+- Verified: `cargo test -p easynet-core` round-trips one IPv4 candidate, keeps `issued_at`, rejects five candidates, a flipped signature byte, and a non-invite URI. `just check` passed.
+- Notes: M1-03 status is `done`. The roadmap checkbox stays open because `docs/roadmap.md` is outside this card's allowlist. Next task is M1-04.
 
 ### 2026-11-20 · M1-02 one socket STUN in the lab
 - Done: `easynet stun --bind IP:PORT --server HOST:PORT` binds one UDP socket, sends one Binding Request, and prints `reflexive=IP:PORT`. The lab script appends after `nat-lab-topology-ok`. Every host builds that binary in `rust:1.85.0-alpine` for the Docker engine's architecture, then the script copies it into `node-a`.

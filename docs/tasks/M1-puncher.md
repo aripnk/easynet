@@ -62,7 +62,7 @@ Locked, and not to be reopened by any card below:
 ---
 
 ### M1-03 · Invite encode and decode
-- **Status:** todo
+- **Status:** done
 - **Goal:** `easynet-core` emits and parses `easynet://invite/…` as a signed `InviteToken` with no socket I/O.
 - **Read first:** `docs/api.md` §2 and §7.1; `docs/spec.md` §5 ( `node_id`, `mesh_id` ); `docs/adr/0005-implementation-language.md`.
 - **Files:** + `crates/easynet-core/src/addr.rs`; + `crates/easynet-core/src/invite.rs`; ~ `crates/easynet-core/src/lib.rs`; ~ `crates/easynet-core/Cargo.toml`
