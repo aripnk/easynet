@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M1-01 · Demux and STUN codec** — Classify datagrams in api §1 order and parse a STUN Binding Success in `easynet-core`. No socket, no lab.
+**M1-02 · One socket STUN in the lab** — `easynet stun` binds one UDP socket inside `node-a` and prints a reflexive address in `172.30.0.0/24`. Append the lab assert after `nat-lab-topology-ok`.
 
 ## Blocked
 
@@ -19,6 +19,11 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-17 · M1-01 demux and STUN codec
+- Done: `easynet-core` classifies datagrams in api §1 order and builds a 20-byte Binding Request. `parse_binding_success` prefers XOR-MAPPED-ADDRESS `0x0020` and falls back to MAPPED-ADDRESS `0x0001`. No new crate and no socket.
+- Verified: `cargo nextest run -p easynet-core` and `just check`. A Binding Success whose first byte is `0x01` classifies as STUN. A mismatched transaction id is rejected.
+- Notes: M1-01 status is `done`. The roadmap checkbox stays open because `docs/roadmap.md` is outside this card's allowlist. Next task is M1-02.
 
 ### 2026-11-17 · M1-00 accepted
 - Done: Owner accepted `docs/tasks/M1-puncher.md`. M1-00 is `done`. Roadmap M1-00 is ticked.

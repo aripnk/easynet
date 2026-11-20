@@ -18,7 +18,7 @@ Locked, and not to be reopened by any card below:
 ---
 
 ### M1-01 · Demux and STUN codec
-- **Status:** todo
+- **Status:** done
 - **Goal:** `easynet-core` classifies datagrams in api §1 order and builds and parses a STUN Binding Request and Binding Success with no socket I/O.
 - **Read first:** `docs/api.md` §1; `docs/adr/0012-stun-demux-and-relay-handshake.md`; `docs/conventions/transport.md`.
 - **Files:** + `crates/easynet-core/src/demux.rs`; + `crates/easynet-core/src/stun.rs`; ~ `crates/easynet-core/src/lib.rs`
