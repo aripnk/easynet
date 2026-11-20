@@ -7,16 +7,15 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use easynet_core::{
-    AddrError, Class, InviteError, InviteToken, PUNCH_ACK, PUNCH_SYN, PunchCache, classify,
-    decode_invite, ed25519_public, encode_invite, encode_punch, mesh_id, pack_socket_addr,
-    unpack_socket_addr, verify_punch, x25519_public,
+    AddrError, Class, InviteError, InviteToken, KEEPALIVE_MS, PROBE_MS, PUNCH_ACK, PUNCH_SYN,
+    PunchCache, binding_request, classify, decode_invite, due, ed25519_public, encode_invite,
+    encode_punch, mesh_id, pack_socket_addr, unpack_socket_addr, verify_punch, x25519_public,
 };
 use tokio::net::UdpSocket;
 use tokio::time::{Duration, Instant, timeout};
 
 const NODE_KEY: &str = "node.key";
 const ROOT_KEY: &str = "root.key";
-const PROBE: Duration = Duration::from_millis(250);
 const PUNCH_LIMIT: Duration = Duration::from_secs(5);
 
 /// Punch or invite I/O failed.
@@ -34,6 +33,10 @@ pub enum PunchIoError {
     Addr(AddrError),
     /// Disk or socket I/O failed.
     Io(io::Error),
+    /// A second ACK arrived after the keepalive.
+    ExtraAck,
+    /// The hold ended before a keepalive was sent.
+    NoKeepalive,
 }
 
 impl std::fmt::Display for PunchIoError {
@@ -45,6 +48,8 @@ impl std::fmt::Display for PunchIoError {
             Self::Invite(err) => write!(f, "invite error {err:?}"),
             Self::Addr(err) => write!(f, "address error {err:?}"),
             Self::Io(err) => write!(f, "{err}"),
+            Self::ExtraAck => write!(f, "extra ack"),
+            Self::NoKeepalive => write!(f, "keepalive was not sent"),
         }
     }
 }
@@ -78,11 +83,20 @@ pub fn issue_invite(state_dir: &Path, candidate: SocketAddr) -> Result<String, P
     encode_invite(&token, &secrets.ed25519).map_err(PunchIoError::Invite)
 }
 
-/// Bind one socket, probe each candidate, and return when a valid ACK arrives.
+/// Bind one socket, probe each candidate, and finish after the first ACK.
+///
+/// `hold_secs == 0` returns after that ACK. `hold_secs > 0` stays up, sends one
+/// ACK-only keepalive at 15 seconds, and does not answer that kind of frame.
+/// `on_ack` runs once for the first valid ACK. `on_keepalive` runs once when
+/// that keepalive frame is sent.
 pub async fn punch_until_ack(
     state_dir: &Path,
     bind: SocketAddr,
     peer_uri: &str,
+    hold_secs: u64,
+    stun_server: Option<SocketAddr>,
+    mut on_ack: impl FnMut(),
+    mut on_keepalive: impl FnMut(),
 ) -> Result<(), PunchIoError> {
     let secrets = load_or_create(state_dir)?;
     let invite = decode_invite(peer_uri).map_err(PunchIoError::Invite)?;
@@ -92,9 +106,14 @@ pub async fn punch_until_ack(
     let mut cache = PunchCache::new();
     let deadline = Instant::now() + PUNCH_LIMIT;
     let mut next_probe = Instant::now();
-    // After the first ACK, keep answering a SYN for one RTT. The peer's SYN
-    // can still be in flight, and leaving without that ACK makes the peer time out.
+    let mut acked_at_ms: Option<u64> = None;
+    let mut peer_src: Option<SocketAddr> = None;
+    let mut last_stun_ms = unix_ms();
+    let mut keepalive_sent = false;
+    let mut acks_after_keepalive = 0u8;
+    // `hold_secs == 0` still answers one in-flight SYN so the peer can finish.
     let mut ack_grace: Option<Instant> = None;
+    let mut hold_deadline: Option<Instant> = None;
     let mut buf = [0u8; 1500];
 
     loop {
@@ -102,16 +121,56 @@ pub async fn punch_until_ack(
             if Instant::now() >= grace {
                 return Ok(());
             }
+        } else if let Some(hold) = hold_deadline {
+            if Instant::now() >= hold {
+                if keepalive_sent {
+                    return Ok(());
+                }
+                return Err(PunchIoError::NoKeepalive);
+            }
         } else if Instant::now() >= deadline {
             return Err(PunchIoError::Timeout);
         }
-        if ack_grace.is_none() && Instant::now() >= next_probe {
+
+        let now_ms = unix_ms();
+        if acked_at_ms.is_none() && Instant::now() >= next_probe {
             send_syns(&socket, &secrets.ed25519, &endpoint, &targets).await?;
-            next_probe = Instant::now() + PROBE;
+            next_probe = Instant::now() + Duration::from_millis(PROBE_MS);
         }
-        let wait_for = match ack_grace {
-            Some(grace) => grace,
-            None => next_probe.min(deadline),
+        if acked_at_ms.is_none() {
+            if let Some(server) = stun_server {
+                if due(last_stun_ms, now_ms, KEEPALIVE_MS) {
+                    send_stun(&socket, server).await?;
+                    last_stun_ms = unix_ms();
+                }
+            }
+        }
+        if hold_deadline.is_some()
+            && !keepalive_sent
+            && due(acked_at_ms.unwrap_or(now_ms), now_ms, KEEPALIVE_MS)
+        {
+            let dest = peer_src.unwrap_or(targets[0]);
+            send_keepalive(&socket, &secrets.ed25519, &endpoint, dest).await?;
+            keepalive_sent = true;
+            on_keepalive();
+        }
+
+        let wait_for = if let Some(grace) = ack_grace {
+            grace
+        } else if let Some(hold) = hold_deadline {
+            let next_keep = if keepalive_sent {
+                hold
+            } else {
+                Instant::now() + Duration::from_millis(PROBE_MS)
+            };
+            hold.min(next_keep)
+        } else {
+            let stun_wait = if stun_server.is_some() {
+                Instant::now() + Duration::from_millis(PROBE_MS)
+            } else {
+                deadline
+            };
+            next_probe.min(deadline).min(stun_wait)
         };
         let wait = wait_for.saturating_duration_since(Instant::now());
         if wait.is_zero() {
@@ -119,7 +178,7 @@ pub async fn punch_until_ack(
         }
         match timeout(wait, socket.recv_from(&mut buf)).await {
             Ok(Ok((n, src))) => {
-                if handle_datagram(
+                match handle_datagram(
                     &socket,
                     &buf[..n],
                     src,
@@ -130,7 +189,28 @@ pub async fn punch_until_ack(
                 )
                 .await?
                 {
-                    ack_grace.get_or_insert_with(|| Instant::now() + Duration::from_millis(300));
+                    PacketKind::Ack => {
+                        if acked_at_ms.is_none() {
+                            acked_at_ms = Some(unix_ms());
+                            peer_src = Some(src);
+                            on_ack();
+                            if hold_secs == 0 {
+                                ack_grace.get_or_insert_with(|| {
+                                    Instant::now() + Duration::from_millis(300)
+                                });
+                            } else {
+                                hold_deadline.get_or_insert_with(|| {
+                                    Instant::now() + Duration::from_secs(hold_secs)
+                                });
+                            }
+                        } else if keepalive_sent {
+                            acks_after_keepalive = acks_after_keepalive.saturating_add(1);
+                            if acks_after_keepalive > 1 {
+                                return Err(PunchIoError::ExtraAck);
+                            }
+                        }
+                    }
+                    PacketKind::Ignored => {}
                 }
             }
             Ok(Err(err)) => return Err(PunchIoError::Io(err)),
@@ -139,17 +219,28 @@ pub async fn punch_until_ack(
     }
 }
 
-/// Run [`punch_until_ack`] on a one-worker runtime.
+/// Run [`punch_until_ack`] on a current-thread runtime.
 pub fn punch_until_ack_blocking(
     state_dir: &Path,
     bind: SocketAddr,
     peer_uri: &str,
+    hold_secs: u64,
+    stun_server: Option<SocketAddr>,
+    on_ack: impl FnMut(),
+    on_keepalive: impl FnMut(),
 ) -> Result<(), PunchIoError> {
-    let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(1)
+    let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?;
-    runtime.block_on(punch_until_ack(state_dir, bind, peer_uri))
+    runtime.block_on(punch_until_ack(
+        state_dir,
+        bind,
+        peer_uri,
+        hold_secs,
+        stun_server,
+        on_ack,
+        on_keepalive,
+    ))
 }
 
 async fn send_syns(
@@ -166,7 +257,12 @@ async fn send_syns(
     Ok(())
 }
 
-/// Returns true when the datagram is a valid ACK.
+enum PacketKind {
+    Ignored,
+    Ack,
+}
+
+/// An ACK-only frame is not answered. A SYN still is, until the path is up.
 async fn handle_datagram(
     socket: &UdpSocket,
     packet: &[u8],
@@ -175,22 +271,40 @@ async fn handle_datagram(
     secret: &[u8; 32],
     endpoint: &[u8],
     cache: &mut PunchCache,
-) -> Result<bool, PunchIoError> {
+) -> Result<PacketKind, PunchIoError> {
     if classify(packet) != Class::Punch {
-        return Ok(false);
+        return Ok(PacketKind::Ignored);
     }
     let verified = match verify_punch(packet, peer_ed25519, unix_ms(), cache) {
         Ok(verified) => verified,
-        Err(_) => return Ok(false),
+        Err(_) => return Ok(PacketKind::Ignored),
     };
     if verified.flags & PUNCH_ACK != 0 {
-        return Ok(true);
+        return Ok(PacketKind::Ack);
     }
     if verified.flags & PUNCH_SYN != 0 {
         let frame = encode_punch(PUNCH_ACK, secret, unix_ms(), random_u64()?, endpoint);
         socket.send_to(&frame, src).await?;
     }
-    Ok(false)
+    Ok(PacketKind::Ignored)
+}
+
+async fn send_keepalive(
+    socket: &UdpSocket,
+    secret: &[u8; 32],
+    endpoint: &[u8],
+    dest: SocketAddr,
+) -> Result<(), PunchIoError> {
+    let frame = encode_punch(PUNCH_ACK, secret, unix_ms(), random_u64()?, endpoint);
+    socket.send_to(&frame, dest).await?;
+    Ok(())
+}
+
+async fn send_stun(socket: &UdpSocket, server: SocketAddr) -> Result<(), PunchIoError> {
+    let mut tx_id = [0u8; 12];
+    random_bytes(&mut tx_id)?;
+    socket.send_to(&binding_request(tx_id), server).await?;
+    Ok(())
 }
 
 fn peer_targets(invite: &InviteToken) -> Result<Vec<SocketAddr>, PunchIoError> {
@@ -341,8 +455,8 @@ mod tests {
         let right_bind: SocketAddr = "127.0.0.1:45122".parse().unwrap();
         let left_uri = issue_invite(&left_dir, left_bind).unwrap();
         let right_uri = issue_invite(&right_dir, right_bind).unwrap();
-        let left = punch_until_ack(&left_dir, left_bind, &right_uri);
-        let right = punch_until_ack(&right_dir, right_bind, &left_uri);
+        let left = punch_until_ack(&left_dir, left_bind, &right_uri, 0, None, || {}, || {});
+        let right = punch_until_ack(&right_dir, right_bind, &left_uri, 0, None, || {}, || {});
         let (left, right) = tokio::join!(left, right);
         let _ = fs::remove_dir_all(&left_dir);
         let _ = fs::remove_dir_all(&right_dir);

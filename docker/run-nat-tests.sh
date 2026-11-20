@@ -122,8 +122,8 @@ compose exec -T router-b iptables -t nat -C PREROUTING -p udp -d 172.30.0.12 --d
 compose exec -T router-b iptables -C FORWARD -p udp -d 10.10.2.2 --dport 51820 -j ACCEPT 2>/dev/null \
   || compose exec -T router-b iptables -I FORWARD -p udp -d 10.10.2.2 --dport 51820 -j ACCEPT
 
-compose exec -d node-a sh -c "/tmp/easynet punch --state-dir /tmp/easynet-state --bind 0.0.0.0:51820 --peer-uri '$uri_b' > /tmp/punch.out 2>&1"
-compose exec -d node-b sh -c "/tmp/easynet punch --state-dir /tmp/easynet-state --bind 0.0.0.0:51820 --peer-uri '$uri_a' > /tmp/punch.out 2>&1"
+compose exec -d node-a sh -c "/tmp/easynet punch --state-dir /tmp/easynet-state --bind 0.0.0.0:51820 --hold-secs 16 --peer-uri '$uri_b' > /tmp/punch.out 2>&1"
+compose exec -d node-b sh -c "/tmp/easynet punch --state-dir /tmp/easynet-state --bind 0.0.0.0:51820 --hold-secs 16 --peer-uri '$uri_a' > /tmp/punch.out 2>&1"
 
 punch_ok=0
 i=0
@@ -150,3 +150,35 @@ if [ "$punch_ok" -ne 1 ]; then
   exit 1
 fi
 echo m1-punch-ok
+
+keep_ok=0
+i=0
+while [ "$i" -lt 25 ]; do
+  i=$((i + 1))
+  sleep 1
+  out_a=$(compose exec -T node-a sh -c 'cat /tmp/punch.out 2>/dev/null || true' | tr -d '\r')
+  out_b=$(compose exec -T node-b sh -c 'cat /tmp/punch.out 2>/dev/null || true' | tr -d '\r')
+  case "$out_a" in
+    *extra\ ack*) echo "node-a saw an extra ack" >&2; printf '%s\n' "$out_a"; exit 1 ;;
+  esac
+  case "$out_b" in
+    *extra\ ack*) echo "node-b saw an extra ack" >&2; printf '%s\n' "$out_b"; exit 1 ;;
+  esac
+  case "$out_a" in
+    *keepalive-sent*)
+      case "$out_b" in
+        *keepalive-sent*)
+          keep_ok=1
+          break
+          ;;
+      esac
+      ;;
+  esac
+done
+printf '%s\n' "$out_a"
+printf '%s\n' "$out_b"
+if [ "$keep_ok" -ne 1 ]; then
+  echo "keepalive was not sent on both nodes" >&2
+  exit 1
+fi
+echo m1-keepalive-ok

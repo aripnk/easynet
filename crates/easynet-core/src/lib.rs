@@ -6,6 +6,7 @@ mod demux;
 mod identity;
 mod invite;
 mod punch;
+mod schedule;
 mod stun;
 
 pub use addr::{AddrError, pack_socket_addr, unpack_socket_addr};
@@ -17,4 +18,5 @@ pub use punch::{
     PUNCH_ACK, PUNCH_SYN, PunchCache, PunchError, VerifiedPunch, encode_punch, node_id,
     verify_punch,
 };
+pub use schedule::{KEEPALIVE_MS, PROBE_MS, due};
 pub use stun::{StunError, binding_request, parse_binding_success};

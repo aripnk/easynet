@@ -113,7 +113,7 @@ Locked, and not to be reopened by any card below:
 ---
 
 ### M1-06 · Fifteen-second keepalive
-- **Status:** todo
+- **Status:** done
 - **Goal:** After `PUNCH` ACK, each side sends one keepalive `PUNCH` at 15 seconds and does not answer that frame.
 - **Read first:** `docs/spec.md` §6; `docs/api.md` §3; `docs/tasks/M1-puncher.md` (M1-05).
 - **Files:** + `crates/easynet-core/src/schedule.rs`; ~ `crates/easynet-core/src/lib.rs`; ~ `crates/easynet-net/src/punch_io.rs`; ~ `crates/easynet-cli/src/bin/easynet.rs`; ~ `docker/run-nat-tests.sh`

@@ -169,6 +169,8 @@ fn punch_cmd(mut args: impl Iterator<Item = String>) {
     let mut state_dir = None;
     let mut bind = None;
     let mut peer_uri = None;
+    let mut hold_secs = None;
+    let mut stun = None;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--help" | "-h" => {
@@ -178,6 +180,8 @@ fn punch_cmd(mut args: impl Iterator<Item = String>) {
             "--state-dir" => state_dir = args.next(),
             "--bind" => bind = args.next(),
             "--peer-uri" => peer_uri = args.next(),
+            "--hold-secs" => hold_secs = args.next(),
+            "--stun" => stun = args.next(),
             other => {
                 eprintln!("easynet: unexpected argument {other}");
                 std::process::exit(2);
@@ -203,8 +207,49 @@ fn punch_cmd(mut args: impl Iterator<Item = String>) {
             std::process::exit(2);
         }
     };
-    match easynet_net::punch_until_ack_blocking(std::path::Path::new(&state_dir), bind, &peer_uri) {
-        Ok(()) => println!("punch-ack"),
+    let hold_secs = match hold_secs.as_deref() {
+        None => 0,
+        Some(text) => match text.parse::<u64>() {
+            Ok(secs) => secs,
+            Err(_) => {
+                eprintln!("easynet: --hold-secs is not a number");
+                std::process::exit(2);
+            }
+        },
+    };
+    let stun = match stun.as_deref() {
+        None => None,
+        Some(text) => match text.parse() {
+            Ok(addr) => Some(addr),
+            Err(_) => {
+                eprintln!("easynet: --stun is not IP:PORT");
+                std::process::exit(2);
+            }
+        },
+    };
+    let mut saw_keepalive = false;
+    let result = easynet_net::punch_until_ack_blocking(
+        std::path::Path::new(&state_dir),
+        bind,
+        &peer_uri,
+        hold_secs,
+        stun,
+        || {
+            println!("punch-ack");
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+        },
+        || {
+            saw_keepalive = true;
+            println!("keepalive-sent");
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+        },
+    );
+    match result {
+        Ok(()) if hold_secs == 0 || saw_keepalive => {}
+        Ok(()) => {
+            eprintln!("easynet: keepalive was not sent");
+            std::process::exit(1);
+        }
         Err(err) => {
             eprintln!("easynet: {err}");
             std::process::exit(1);

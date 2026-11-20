@@ -6,7 +6,7 @@ Do not read the whole log unless a card says to.
 
 ## Next task
 
-**M1-06 · Fifteen-second keepalive** — After `PUNCH` ACK, each side sends one keepalive `PUNCH` at 15 seconds and does not answer that frame.
+**M2-00 · Write M2 task cards** — Planning card. Do not implement Noise or TUN until the owner asks.
 
 ## Blocked
 
@@ -19,6 +19,11 @@ Do not read the whole log unless a card says to.
 ---
 
 ## Entries
+
+### 2026-11-20 · M1-06 fifteen-second keepalive
+- Done: `due` is true at 15_000 ms and false at 14_999. After the first ACK, `punch --hold-secs 16` stops SYN probes, sends one flags-`0x02` keepalive at 15 seconds, and does not answer that frame. A second ACK after the keepalive fails the process. `--hold-secs 0` still returns on the first ACK.
+- Verified: scheduler unit test passed. `just lab-test` printed `nat-lab-topology-ok`, `m1-stun-ok`, `punch-ack` on both nodes, `m1-punch-ok`, then `keepalive-sent` on both nodes and `m1-keepalive-ok`. `just check` passed (24 tests).
+- Notes: M1-06 status is `done`. The roadmap checkbox stays open because `docs/roadmap.md` is outside this card. The 15_000 ms interval was not shortened. Next task is M2-00, which is planning.
 
 ### 2026-11-20 · M1-05 mutual punch on the cone path
 - Done: The binary generates `node.key` (ed25519 secret || x25519 secret) and `root.key` (root ed25519 secret), mode `0600`, and reuses them. The user supplies neither. `ed25519_public` and `x25519_public` are in `easynet-core`, which the owner allowed for this card. `invite issue` prints one invite. `punch` uses one UDP socket, probes every 250 ms, answers a SYN from the packet source, and prints `punch-ack`.
